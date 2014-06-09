@@ -6,13 +6,18 @@ usage () {
     echo "usage: sj [options] JOB_FILE param=value"
 }
 
-SHOW_ONLY=no
+SHOW_JOB=no
+SHOW_PARAMS=no
 OPEN=no
 SUBSTS=''
 while [ $# -gt 0 ]; do
     case $1 in
-        --show)
-            SHOW_ONLY=yes
+        --show-job)
+            SHOW_JOB=yes
+            ;;
+        --show-params)
+            SHOW_PARAMS=yes
+            SHOW_JOB=yes
             ;;
         --open)
             OPEN=yes
@@ -54,6 +59,7 @@ substs = {}
 for kv in sys.argv[2].split(','):
     k, v = kv.split('=', 1)
     substs[k] = v
+show_params = (sys.argv[3] == 'yes')
 for action in job['actions']:
     if action['command'] != 'lava_test_shell':
         continue
@@ -64,21 +70,29 @@ for action in job['actions']:
             if 'parameters' not in value:
                 continue
             ps = value['parameters']
+            if not ps:
+                continue
             newps = {}
-            for k, v in ps.items():
+            if show_params:
+                if 'git-repo' in value:
+                    print value['git-repo']
+                if 'bzr-repo' in value:
+                    print value['bzr-repo']
+            for k, v in sorted(ps.items()):
                 newps[k] = substs.get(k, v)
+                if show_params:
+                    print '    ' + k + ':', newps[k]
             value['parameters'] = newps
-print json.dumps(job, indent=2)
-" $tmpdir/job.json "$SUBSTS" > $tmpdir/job2.json
+if not show_params:
+    print json.dumps(job, indent=2)
+" $tmpdir/job.json "$SUBSTS" "$SHOW_PARAMS" > $tmpdir/job2.json
     mv $tmpdir/job2.json $tmpdir/job.json
 fi
 
-if [ "$SHOW_ONLY" = "yes" ]; then
+if [ "$SHOW_JOB" = "yes" ]; then
     cat $tmpdir/job.json
     exit 0
 fi
-
-exit 0
 
 lava scheduler submit-job https://$USER@validation.linaro.org/RPC2/ $tmpdir/job.json | tee $tmpdir/output.txt
 if [ ${PIPESTATUS[0]} -eq 0 ] && [ "$OPEN" = yes ]; then
