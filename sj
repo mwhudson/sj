@@ -49,6 +49,7 @@ while [ $# -gt 0 ]; do
             else
                 FILENAME=$1
             fi
+            ;;
     esac
     shift
 done
@@ -67,14 +68,15 @@ if [ "${FILENAME%%.yaml}" != "${FILENAME}" ] || [ "${FILENAME%%.yml}" != "${FILE
 else
     python -c "import json, sys; print json.dumps(json.load(open(sys.argv[1])), indent=2)" $FILENAME > $tmpdir/job.json
 fi
-if [ -n "$SUBSTS" ]; then
+if [ -n "$SUBSTS" ] || [ "$SHOW_PARAMS" = "yes" ]; then
     python -c "
 import json,sys
 job = json.load(open(sys.argv[1]))
 substs = {}
-for kv in sys.argv[2].split(','):
-    k, v = kv.split('=', 1)
-    substs[k] = v
+if sys.argv[2]:
+    for kv in sys.argv[2].split(','):
+        k, v = kv.split('=', 1)
+        substs[k] = v
 show_params = (sys.argv[3] == 'yes')
 for action in job['actions']:
     if action['command'] != 'lava_test_shell':
