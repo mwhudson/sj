@@ -3,7 +3,23 @@
 set -eu
 
 usage () {
-    echo "usage: sj [options] JOB_FILE param=value"
+    echo "usage: sj [options] JOB_FILE [PARAM=VALUE ...]"
+    echo ""
+    echo "Submit a job to LAVA."
+    echo ""
+    echo "If JOB_FILE ends with .yaml or .yml it is converted from YAML to JSON."
+    echo ""
+    echo "JOB_FILE can be followed multiple PARAM=VALUE specifications -- if any"
+    echo "lava_test_shell actions specify a value for PARAM it will be overwritten"
+    echo "with VALUE before submission."
+    echo ""
+    echo "Optional arguments:"
+    echo " --show-job     Show the job after conversion to JSON and substituting"
+    echo "                parameters (and do not submit the job)."
+    echo " --show-params  Print a summary of the parameters specified in the job"
+    echo "                after processing any command-line substitutionns (and"
+    echo "                do not submit the job)."
+    echo " --open         Open the job page in a browser after submission."
 }
 
 SHOW_JOB=no
