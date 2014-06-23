@@ -114,6 +114,10 @@ fi
 
 lava scheduler submit-job https://$USER@validation.linaro.org/RPC2/ $tmpdir/job.json | tee $tmpdir/output.txt
 if [ ${PIPESTATUS[0]} -eq 0 ] && [ "$OPEN" = yes ]; then
-    job_id=$(awk '/submitted as/ { print $5 }' $tmpdir/output.txt)
-    gnome-open https://validation.linaro.org/scheduler/job/$job_id
+    cat $tmpdir/output.txt | python -c 'import re, sys
+for l in sys.stdin:
+ for m in re.findall("[0-9.]+", l): print m' | \
+    while read job_id; do
+        gnome-open https://validation.linaro.org/scheduler/job/$job_id
+    done
 fi
